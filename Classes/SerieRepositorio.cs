@@ -16,6 +16,11 @@ namespace DIO.Series
             listaSerie[id].Exclui();
         }
 
+        public void Ativa(int id)
+        {
+            listaSerie[id].Ativa();
+        }
+
         public void Insere(Serie objeto)
         {
             listaSerie.Add(objeto);
@@ -33,12 +38,15 @@ namespace DIO.Series
 
         public Serie RetornaPorId(int id)
         {
+           if(id<0 || id >=listaSerie.Count)return null; 
            return listaSerie[id];
         }
 
         public void Load(){
             FileStream fs = new FileStream("Series.txt", FileMode.Open, FileAccess.Read);  
             StreamReader sr = new StreamReader(fs);  
+            //Limpa lista atual
+            listaSerie.Clear();
             //Console.WriteLine("Program to show content of test file");  
             sr.BaseStream.Seek(0, SeekOrigin.Begin);  
             string str = sr.ReadLine();  
@@ -53,7 +61,8 @@ namespace DIO.Series
                                     genero: (Genero)int.Parse(words[1]),
                                     titulo: words[2],
                                     ano: int.Parse(words[3]),
-                                    descricao: words[4]);
+                                    descricao: words[4],
+                                    excluido: bool.Parse(words[5]));
                 this.Insere(novaSerie);
                 //Console.WriteLine();
                 str = sr.ReadLine();  
@@ -63,29 +72,36 @@ namespace DIO.Series
             fs.Close();  
         }   
         public void Save(){
-            string resposta="";
-            while(resposta!="S" && resposta!="N"){
-                Console.WriteLine("Essao operação sobreescreve dados anteriores"+
-                                Environment.NewLine+"Deseja continuar (S ou N)?");
-                resposta=Console.ReadLine().ToUpper();
-            }
-            if(resposta=="N")return;
+           
             FileStream fs = new FileStream("Series.txt", FileMode.Create, FileAccess.Write);  
             StreamWriter sw = new StreamWriter(fs);  
             
             foreach(Serie serie in listaSerie) {
-                if(!serie.retornaExcluido()){
                     sw.Write("{0},",serie.Id);
                     sw.Write("{0},",((int)serie.retornaGenero()));
                     sw.Write("{0},",serie.retornaTitulo());
                     sw.Write("{0},",serie.retornaAno());
-                    sw.WriteLine("{0}",serie.retornaDescricao());
-                }
+                    sw.Write("{0},",serie.retornaDescricao());
+                    sw.WriteLine("{0}",serie.retornaExcluido());
             }
                   
             sw.Flush();  
             sw.Close();  
             fs.Close();  
         }
+
+        public void Pack(){
+            Serie serie;
+            // Salva, apaga repositorio em memoria, e carrega novamente 
+            for (int i = listaSerie.Count - 1; i >= 0; i--){
+                serie=this.RetornaPorId(i);
+                if(serie.retornaExcluido()) listaSerie.RemoveAt(i);
+            }
+            Save();
+            listaSerie.Clear();
+            Load();
+            
+        }
+
     }
 }
